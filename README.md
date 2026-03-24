@@ -1,124 +1,285 @@
-# RepoGuardian
+<p align="center">
+  <img src="assets/banner.svg" alt="RepoGuardian Banner" width="100%" />
+</p>
 
-RepoGuardian is a production-ready foundation for continuously verifying, repairing, and maintaining repository health across **GitHub** and **Hugging Face**.
+<p align="center">
+  <a href="https://github.com/ruslanmv/RepoGuardian/actions"><img src="https://img.shields.io/github/actions/workflow/status/ruslanmv/RepoGuardian/pull-request-validation.yml?style=flat-square&logo=github&label=CI" alt="CI Status" /></a>
+  <a href="https://pypi.org/project/repoguardian/"><img src="https://img.shields.io/pypi/v/repoguardian?style=flat-square&logo=pypi&logoColor=white" alt="PyPI" /></a>
+  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-3.11%20%7C%203.12-blue?style=flat-square&logo=python&logoColor=white" alt="Python" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green?style=flat-square" alt="License" /></a>
+  <a href="#platforms"><img src="https://img.shields.io/badge/platforms-GitHub%20%7C%20GitLab%20%7C%20HuggingFace-blueviolet?style=flat-square" alt="Platforms" /></a>
+</p>
 
-It discovers repositories, clones them into isolated workspaces, runs install/test/start verification, applies safe local repairs, validates the result, and prepares a repair branch that is ready to become a pull request.
+<p align="center">
+  <b>Autonomous health verification, repair, and governance for your entire repository fleet.</b><br/>
+  <sub>Supports GitHub, GitLab, and Hugging Face — with LLM-assisted repair via OllaBridge.</sub>
+</p>
 
-## What it does
+---
 
-- Discovers repositories from a GitHub org or user and a Hugging Face namespace
-- Detects repository type and basic health signals
-- Verifies install, test, and startup flows
-- Applies safe automated fixes for common repo hygiene issues
-- Generates a repair plan and branch name for human review
-- Publishes JSON and HTML status artifacts for dashboards
+## 🛡️ Overview
 
-## Current repair coverage
+RepoGuardian continuously monitors, verifies, and repairs repositories across **GitHub**, **GitLab**, and **Hugging Face**. It discovers your repos, clones them into isolated sandboxes, runs install/test/start verification, applies safe automated repairs, and generates a health dashboard — all autonomously.
 
-RepoGuardian currently focuses on the safest production bootstrap fixes:
-
-- missing `Makefile`
-- missing `pyproject.toml`
-- missing `tests/test_health.py`
-- missing Hugging Face README front matter
-- missing Python 3.11 and `tool.uv` markers in `pyproject.toml`
-
-This gives you a solid base repo that can be extended with language-specific and platform-specific repair strategies.
-
-## Platforms
-
-### GitHub
-
-- org-wide or user-wide repository discovery
-- branch naming for repair proposals
-- ready for PR workflows after branch push
-
-### Hugging Face
-
-- model, dataset, and Space discovery
-- repo metadata validation
-- branch-ready repair workflow for Hub repositories
-
-## Installation
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .[dev]
+```
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│   Discover    │───▶│    Analyze     │───▶│     Heal      │───▶│    Report     │
+│  GitHub       │    │  Layout       │    │  Auto-fix    │    │  Dashboard   │
+│  GitLab       │    │  Standards    │    │  LLM-assist  │    │  JSON / HTML │
+│  HuggingFace  │    │  Health       │    │  PR-ready    │    │  Artifacts   │
+└───────────────┘    └───────────────┘    └───────────────┘    └───────────────┘
 ```
 
-## Configuration
+---
 
-Copy the example environment file and set the namespaces you want to manage:
+## ✨ Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🔍 **Multi-platform Discovery** | Scan GitHub orgs/users, GitLab groups, and Hugging Face namespaces |
+| 🧰 **Automated Repair** | Fix missing Makefiles, pyproject.toml, health tests, and HF metadata |
+| 🤖 **LLM-Assisted Healing** | OllaBridge Cloud integration for intelligent repair suggestions |
+| 🛡️ **Policy Engine** | Risk assessment and change governance before any modifications |
+| 📈 **Health Dashboard** | Static JSON + HTML status site deployed to GitHub Pages |
+| 🔄 **Self-Healing Loop** | Iterative verify → fix → verify cycle with configurable retry |
+| 🔀 **GitPilot Integration** | AI-assisted code repair through the GitPilot agent |
+| 📦 **MatrixLab Sandbox** | Isolated execution environment for safe verification |
+| 🌐 **GitLab Support** | Full GitLab API v4 integration (gitlab.com + self-hosted) |
+| 🤗 **HuggingFace Support** | Model, dataset, and Space repository management |
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/ruslanmv/RepoGuardian.git
+cd RepoGuardian
+
+# Create virtual environment and install
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[all]"
+```
+
+Or with `uv` (recommended):
+
+```bash
+uv sync
+```
+
+### Configuration
 
 ```bash
 cp .env.example .env
+# Edit .env with your tokens and settings
 ```
 
-Key variables:
-
-- `GITHUB_ORG` or `GITHUB_USER`
-- `HF_NAMESPACE`
-- `GITHUB_TOKEN`
-- `HF_TOKEN`
-- `DRY_RUN=true` for safe local validation without pushing branches
-
-## CLI
+### Run
 
 ```bash
+# Discover all repositories
 repoguardian discover
+
+# Run full health check + repair cycle
 repoguardian run
-repoguardian check-repo owner/repo
+
+# Check a specific repository
+repoguardian check-repo owner/repo-name
+
+# Generate status dashboard
 repoguardian publish-site
 ```
 
-`matrix-maintainer` remains as a compatibility alias.
+---
 
-## How the production flow works
+## 🔧 Configuration Reference
 
-1. Discover repositories
-2. Clone into `work/`
-3. Analyze layout and metadata
-4. Run install / test / start verification
-5. Apply safe repairs if needed
-6. Re-run verification
-7. Mark healthy, degraded, or down
-8. Prepare a repair branch and site artifacts
+### Platforms
 
-## Branches and PR readiness
+<details>
+<summary><b>🐙 GitHub</b></summary>
 
-When a repository becomes healthy after fixes, RepoGuardian prepares a branch named like:
+```env
+GITHUB_TOKEN=ghp_xxxxxxxxxxxx
+GITHUB_ORG=my-organization        # or GITHUB_USER=my-username
+GITHUB_BASE_BRANCH=main
+GITHUB_INCLUDE_PRIVATE=true
+```
+</details>
 
-```text
-repoguardian/repair/<repo-name>
+<details>
+<summary><b>🦊 GitLab</b></summary>
+
+```env
+GITLAB_TOKEN=glpat-xxxxxxxxxxxx
+GITLAB_URL=https://gitlab.com     # or your self-hosted instance
+GITLAB_GROUP=my-group              # or GITLAB_USER=my-username
+GITLAB_INCLUDE_PRIVATE=true
+```
+</details>
+
+<details>
+<summary><b>🤗 Hugging Face</b></summary>
+
+```env
+HF_TOKEN=hf_xxxxxxxxxxxx
+HF_NAMESPACE=my-namespace
+HF_REPO_TYPES=model,dataset,space
+```
+</details>
+
+<details>
+<summary><b>🤖 OllaBridge Cloud (LLM Repair)</b></summary>
+
+```env
+OLLABRIDGE_ENABLED=true
+OLLABRIDGE_BASE_URL=https://your-ollabridge.hf.space
+OLLABRIDGE_API_KEY=              # optional
+OLLABRIDGE_MODEL=qwen2.5:1.5b
+OLLABRIDGE_TIMEOUT=120.0
 ```
 
-In `DRY_RUN=true` mode it records the intended push without pushing upstream. Set `DRY_RUN=false` to allow real branch pushes.
+RepoGuardian uses OllaBridge's OpenAI-compatible `/v1/chat/completions` endpoint to get LLM-assisted repair suggestions when automated fixes aren't sufficient.
+</details>
 
-## Status artifacts
+---
 
-RepoGuardian writes:
+## 🏗️ Architecture
 
-- `state/repo_inventory.json`
-- `state/latest_status.json`
-- `state/history_index.json`
-- `status-site/data/*.json`
-- `status-site/index.html`
+```
+repoguardian/
+├── cli.py                  # Typer CLI entrypoint
+├── main.py                 # Orchestration: discover → check → heal → report
+├── settings.py             # Pydantic settings from .env
+├── models.py               # Core data models (RepoRef, RepoHealthReport, etc.)
+│
+├── inventory/              # Repository discovery
+│   ├── github_discovery.py  # GitHub org/user scanning
+│   ├── gitlab_discovery.py  # GitLab group/user scanning
+│   └── huggingface_discovery.py
+│
+├── analyzers/              # Repository analysis
+│   └── repo_analyzer.py     # Layout detection & standard checks
+│
+├── healing/                # Self-healing engine
+│   ├── healing_loop.py      # Iterative verify-fix-verify
+│   └── fix_strategies.py    # Safe automated repairs
+│
+├── llm/                    # LLM integration
+│   └── ollabridge_client.py # OllaBridge Cloud API client
+│
+├── gitpilot/               # GitPilot AI agent integration
+├── matrixlab/              # Sandbox execution
+├── governance/             # Policy engine & risk assessment
+├── standards/              # Repository standard rules
+├── reporting/              # Status & incident reporting
+├── site/                   # Static dashboard generator
+└── storage/                # State persistence
+```
 
-## Test suite
+---
+
+## 🤖 OllaBridge Integration
+
+RepoGuardian integrates with [OllaBridge Cloud](https://github.com/ruslanmv/ollabridge-cloud) for LLM-powered repair intelligence:
+
+1. **Health Check Fails** → RepoGuardian detects broken install/test/start
+2. **LLM Analysis** → Sends failure context to OllaBridge `/v1/chat/completions`
+3. **Smart Suggestions** → Receives repair recommendations from the LLM
+4. **Safe Application** → Applies fixes through the governance policy engine
+
+```python
+# OllaBridge is used automatically when enabled
+# It provides intelligent repair suggestions beyond template fixes
+OLLABRIDGE_ENABLED=true
+OLLABRIDGE_BASE_URL=https://your-ollabridge.hf.space
+```
+
+---
+
+## 🌐 Platform Compatibility
+
+| Platform | Discovery | Clone | Repair | PR/MR | Status |
+|----------|-----------|-------|--------|-------|--------|
+| **GitHub** | ✅ Org + User | ✅ HTTPS | ✅ Full | ✅ Pull Request | Stable |
+| **GitLab** | ✅ Group + User | ✅ HTTPS | ✅ Full | 🚧 Merge Request | Beta |
+| **Hugging Face** | ✅ Namespace | ✅ HTTPS | ✅ Metadata | 🚧 Discussion | Beta |
+
+---
+
+## 📈 Repair Coverage
+
+| Check | Auto-Fix | Description |
+|-------|----------|-------------|
+| `makefile` | ✅ | Ensures `install`, `test`, `start` targets exist |
+| `pyproject` | ✅ | Creates/updates pyproject.toml with Python 3.11+ |
+| `health_test` | ✅ | Generates `tests/test_health.py` |
+| `python311` | ✅ | Enforces `requires-python >= 3.11` |
+| `uv` | ✅ | Adds `[tool.uv]` section |
+| `readme` | ✅ | Validates README and HF front matter |
+| **LLM-assisted** | 🤖 | OllaBridge-powered intelligent fixes |
+
+---
+
+## 🚀 Deployment
+
+### GitHub Actions (Recommended)
+
+RepoGuardian ships with ready-to-use workflows:
+
+- **`daily-maintenance.yml`** — Runs health checks daily at 05:15 UTC
+- **`manual-run.yml`** — On-demand single repo or full fleet check
+- **`publish-status-site.yml`** — Deploys dashboard to GitHub Pages
+
+### HuggingFace Spaces
+
+See [`deploy/huggingface/`](deploy/huggingface/) for Docker-based HF Spaces deployment.
+
+### Docker
 
 ```bash
-pytest
+docker build -t repoguardian .
+docker run --env-file .env repoguardian run-daily
 ```
 
-## Recommended next production steps
+---
 
-- add GitHub PR creation through the API
-- add Hugging Face discussion / PR publishing
-- add repo-type-specific validators for Node, Rust, model cards, datasets, and Spaces
-- run execution in containers instead of direct local subprocesses
-- add allowlists, deny lists, and approval policies
+## 🧪 Testing
 
-## License
+```bash
+# Run all tests
+pytest
 
-Apache-2.0
+# Unit tests only
+pytest tests/unit -q
+
+# With coverage
+pytest --cov=repoguardian --cov-report=html
+```
+
+---
+
+## 📚 Related Projects
+
+| Project | Description |
+|---------|-------------|
+| [OllaBridge Cloud](https://github.com/ruslanmv/ollabridge-cloud) | Enterprise AI gateway with OpenAI-compatible API |
+| [OllaBridge](https://github.com/ruslanmv/ollabridge) | Local AI bridge for Ollama |
+| [GitPilot](https://github.com/ruslanmv/gitpilot) | Multi-LLM AI assistant for Git workflows |
+| [MatrixLab](https://github.com/agent-matrix/matrixlab) | Sandbox execution environment |
+
+---
+
+## 📄 License
+
+Apache-2.0 © [Ruslan Magana Vsevolodovna](https://github.com/ruslanmv)
+
+---
+
+<p align="center">
+  <img src="assets/logo.svg" alt="RepoGuardian" width="64" /><br/>
+  <sub>Built with ❤️ for the open-source community</sub>
+</p>

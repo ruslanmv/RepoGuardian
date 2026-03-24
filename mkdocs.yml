@@ -1,4 +1,4 @@
-site_name: matrix-maintainer
+site_name: RepoGuardian
 theme:
   name: mkdocs
 nav:
