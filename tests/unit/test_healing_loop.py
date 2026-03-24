@@ -1,5 +1,5 @@
-from matrix_maintainer.models import RepoHealthReport
-from matrix_maintainer.healing.retry_policy import should_retry
+from repoguardian.models import RepoHealthReport
+from repoguardian.healing.retry_policy import should_retry
 
 def test_retry_policy():
     assert should_retry(0, 3)

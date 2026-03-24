@@ -29,8 +29,12 @@ jobs:
       - name: Run daily maintainer
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_ORG: agent-matrix
-        run: uv run matrix-maintainer run-daily
+          GITHUB_ORG: ${{ vars.GITHUB_ORG }}
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_GROUP: ${{ vars.GITLAB_GROUP }}
+          OLLABRIDGE_ENABLED: ${{ vars.OLLABRIDGE_ENABLED }}
+          OLLABRIDGE_BASE_URL: ${{ vars.OLLABRIDGE_BASE_URL }}
+        run: uv run repoguardian run-daily
 
       - name: Upload state artifact
         uses: actions/upload-artifact@v4
