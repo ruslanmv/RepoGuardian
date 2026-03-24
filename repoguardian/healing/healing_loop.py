@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from repoguardian.analyzers.repo_analyzer import analyze_repo_layout
@@ -13,10 +14,12 @@ from repoguardian.matrixlab.verifier import verify_repo
 from repoguardian.models import RepoHealthReport
 from repoguardian.settings import Settings
 
+logger = logging.getLogger(__name__)
+
 
 def run_healing_loop(report: RepoHealthReport, repo_dir: Path, settings: Settings) -> RepoHealthReport:
     gitpilot = GitPilotClient(settings)
-    llm = OllaBridgeClient(settings)
+    ollabridge = OllaBridgeClient(settings) if settings.ollabridge_enabled else None
 
     attempt = 0
     while True:
@@ -34,10 +37,14 @@ def run_healing_loop(report: RepoHealthReport, repo_dir: Path, settings: Setting
         report.fix_attempts += 1
         attempt += 1
 
-        if llm.available():
-            suggestion = llm.suggest_repair(report, str(repo_dir))
-            if suggestion:
-                report.notes.append(f"llm_suggestion={suggestion[:200]}")
+        # Try LLM-assisted repair via OllaBridge if available
+        if ollabridge and ollabridge.available():
+            try:
+                prompt = build_fix_prompt(report, str(repo_dir))
+                suggestion = ollabridge.chat(prompt)
+                report.notes.append(f"ollabridge suggestion received ({len(suggestion)} chars)")
+            except Exception as exc:
+                logger.warning("OllaBridge repair suggestion failed: %s", exc)
 
         if gitpilot.available():
             gitpilot.run_headless(report.repo.full_name, build_fix_prompt(report, str(repo_dir)), report.branch_name)
