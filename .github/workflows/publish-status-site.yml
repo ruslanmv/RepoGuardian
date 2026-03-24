@@ -31,7 +31,7 @@ jobs:
         run: uv sync
 
       - name: Build site
-        run: uv run matrix-maintainer publish-site
+        run: uv run repoguardian publish-site
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

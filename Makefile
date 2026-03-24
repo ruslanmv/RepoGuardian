@@ -12,20 +12,20 @@ test:
 	$(UV) run pytest -q
 
 lint:
-	$(UV) run python -m compileall matrix_maintainer
+	$(UV) run python -m compileall repoguardian
 	$(UV) run pytest -q tests/unit
 
 format:
 	@echo "No formatter configured by default; add ruff/black if desired."
 
 start:
-	$(UV) run matrix-maintainer --help
+	$(UV) run repoguardian --help
 
 build-site:
-	$(UV) run matrix-maintainer publish-site
+	$(UV) run repoguardian publish-site
 
 run-daily:
-	$(UV) run matrix-maintainer run-daily
+	$(UV) run repoguardian run-daily
 
 clean:
 	rm -rf .pytest_cache htmlcov dist build tmp
