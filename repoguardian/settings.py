@@ -28,6 +28,8 @@ class Settings(BaseSettings):
     hf_token: str | None = Field(default=None, alias="HF_TOKEN")
     hf_namespace: str | None = Field(default=None, alias="HF_NAMESPACE")
     hf_repo_types: str = Field(default="model,dataset,space", alias="HF_REPO_TYPES")
+    hf_auto_free_zerogpu: bool = Field(default=True, alias="HF_AUTO_FREE_ZEROGPU")
+    hf_zerogpu_exclude: str = Field(default="", alias="HF_ZEROGPU_EXCLUDE")
 
     # Runtime
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
@@ -77,6 +79,10 @@ class Settings(BaseSettings):
     @property
     def hf_repo_type_list(self) -> list[str]:
         return [item.strip() for item in self.hf_repo_types.split(",") if item.strip()]
+
+    @property
+    def hf_zerogpu_exclude_set(self) -> set[str]:
+        return {s.strip() for s in self.hf_zerogpu_exclude.split(",") if s.strip()}
 
 
 @lru_cache(maxsize=1)

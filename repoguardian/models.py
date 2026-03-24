@@ -52,6 +52,22 @@ class RepairPlan(BaseModel):
     strategy: str = "local-template"
 
 
+class SpaceDiagnosisResult(BaseModel):
+    """Serializable summary of a Space diagnosis."""
+    sdk: str = "unknown"
+    app_file: str = ""
+    hardware: str = "cpu-basic"
+    runtime_stage: str = "unknown"
+    issues: list[str] = Field(default_factory=list)
+    recommendations: list[str] = Field(default_factory=list)
+    dead_patterns: list[str] = Field(default_factory=list)
+    needs_gpu: bool = False
+    needs_rebuild: bool = False
+    severity: str = "info"
+    fix_applied: bool = False
+    fix_explanation: str = ""
+
+
 class RepoHealthReport(BaseModel):
     repo: RepoRef
     generated_at: str = Field(default_factory=utc_now)
@@ -81,11 +97,28 @@ class RepoHealthReport(BaseModel):
     pushed_branch: str | None = None
     notes: list[str] = Field(default_factory=list)
 
+    # HuggingFace Space-specific
+    space_diagnosis: SpaceDiagnosisResult | None = None
+
     def model_post_init(self, __context: Any) -> None:
         if self.platform is None:
             self.platform = self.repo.platform
 
     def finalize_status(self) -> None:
+        # Space-specific status
+        if self.space_diagnosis:
+            if self.space_diagnosis.fix_applied:
+                self.status = "repaired"
+            elif self.space_diagnosis.severity == "critical":
+                self.status = "down"
+            elif self.space_diagnosis.severity == "warning":
+                self.status = "degraded"
+            elif self.space_diagnosis.severity == "info" and not self.space_diagnosis.issues:
+                self.status = "healthy"
+            else:
+                self.status = "unknown"
+            return
+        # Standard status
         if self.install_ok and self.test_ok and self.start_ok and self.health_test_ok:
             self.status = "healthy"
         elif any([self.install_ok, self.test_ok, self.start_ok, self.metadata_ok]):

@@ -43,4 +43,11 @@ def analyze_repo_layout(report: RepoHealthReport, repo_dir: Path) -> RepoHealthR
         StandardCheck(name="uv", ok=report.uv_ok),
         StandardCheck(name="readme", ok=report.metadata_ok),
     ]
+
+    # Add Space-specific checks for HuggingFace Spaces
+    if report.repo.platform == "huggingface" and report.repo_type == "space":
+        from repoguardian.analyzers.space_analyzer import analyze_space
+        diag = analyze_space(report, repo_dir)
+        # Space checks are added to report.checks by analyze_space
+
     return report
