@@ -27,7 +27,7 @@ jobs:
           TARGET_REPO: ${{ github.event.inputs.repo }}
         run: |
           if [ -n "$TARGET_REPO" ]; then
-            uv run matrix-maintainer check-repo "$TARGET_REPO"
+            uv run repoguardian check-repo "$TARGET_REPO"
           else
-            uv run matrix-maintainer run-daily
+            uv run repoguardian run-daily
           fi
