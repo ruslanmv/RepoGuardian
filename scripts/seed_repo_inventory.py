@@ -1,6 +1,6 @@
-from matrix_maintainer.inventory.org_discovery import GitHubOrgDiscovery
-from matrix_maintainer.settings import get_settings
-from matrix_maintainer.inventory.repo_inventory import save_inventory
+from repoguardian.inventory.github_discovery import GitHubOrgDiscovery
+from repoguardian.settings import get_settings
+from repoguardian.inventory.repo_inventory import save_inventory
 
 if __name__ == "__main__":
     settings = get_settings()
