@@ -11,7 +11,7 @@ from repoguardian.governance.policy_engine import evaluate_policy
 from repoguardian.healing.healing_loop import run_healing_loop
 from repoguardian.inventory.filters import include_repo
 from repoguardian.inventory.huggingface_discovery import HuggingFaceDiscovery
-from repoguardian.inventory.org_discovery import GitHubOrgDiscovery
+from repoguardian.inventory.github_discovery import GitHubOrgDiscovery
 from repoguardian.inventory.gitlab_discovery import GitLabDiscovery
 from repoguardian.inventory.repo_inventory import save_inventory
 from repoguardian.matrixlab.sandbox import SandboxManager
@@ -42,8 +42,8 @@ def push_repair_branch(repo_dir: Path, report: RepoHealthReport, settings: Setti
 def collect_repositories(settings: Settings) -> list[RepoRef]:
     repos: list[RepoRef] = []
     repos.extend(GitHubOrgDiscovery(settings).list_repositories())
-    repos.extend(GitLabDiscovery(settings).list_repositories())
     repos.extend(HuggingFaceDiscovery(settings).list_repositories())
+    repos.extend(GitLabDiscovery(settings).list_repositories())
     return [repo for repo in repos if include_repo(repo)]
 
 

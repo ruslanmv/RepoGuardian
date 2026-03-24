@@ -5,13 +5,14 @@ from rich.console import Console
 from rich.table import Table
 
 from repoguardian.inventory.huggingface_discovery import HuggingFaceDiscovery
-from repoguardian.inventory.org_discovery import GitHubOrgDiscovery
+from repoguardian.inventory.github_discovery import GitHubOrgDiscovery
+from repoguardian.inventory.gitlab_discovery import GitLabDiscovery
 from repoguardian.logging import configure_logging
 from repoguardian.main import check_single_repo, run_daily
 from repoguardian.site.generator import generate_site
 from repoguardian.settings import get_settings
 
-app = typer.Typer(add_completion=False, help="RepoGuardian CLI")
+app = typer.Typer(add_completion=False, help="RepoGuardian CLI – autonomous repo health & repair")
 console = Console()
 
 
@@ -23,8 +24,13 @@ def _callback() -> None:
 
 @app.command("discover")
 def discover() -> None:
+    """Discover repositories across all configured platforms."""
     settings = get_settings()
-    repos = GitHubOrgDiscovery(settings).list_repositories() + HuggingFaceDiscovery(settings).list_repositories()
+    repos = (
+        GitHubOrgDiscovery(settings).list_repositories()
+        + HuggingFaceDiscovery(settings).list_repositories()
+        + GitLabDiscovery(settings).list_repositories()
+    )
     table = Table(title="Repositories")
     table.add_column("Platform")
     table.add_column("Name")
@@ -37,6 +43,7 @@ def discover() -> None:
 @app.command("run")
 @app.command("run-daily")
 def run_daily_cmd() -> None:
+    """Run full health check and repair cycle."""
     settings = get_settings()
     reports = run_daily(settings)
     console.print(f"Processed {len(reports)} repositories")
@@ -44,6 +51,7 @@ def run_daily_cmd() -> None:
 
 @app.command("publish-site")
 def publish_site() -> None:
+    """Generate the static status dashboard."""
     settings = get_settings()
     generate_site(settings)
     console.print("Status site generated")
@@ -51,8 +59,13 @@ def publish_site() -> None:
 
 @app.command("check-repo")
 def check_repo(repo_name: str) -> None:
+    """Check a single repository by name."""
     settings = get_settings()
-    repos = GitHubOrgDiscovery(settings).list_repositories() + HuggingFaceDiscovery(settings).list_repositories()
+    repos = (
+        GitHubOrgDiscovery(settings).list_repositories()
+        + HuggingFaceDiscovery(settings).list_repositories()
+        + GitLabDiscovery(settings).list_repositories()
+    )
     repo = next((r for r in repos if r.name == repo_name or r.full_name == repo_name), None)
     if repo is None:
         raise typer.Exit(f"Repository not found: {repo_name}")
