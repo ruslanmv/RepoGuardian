@@ -76,6 +76,8 @@ app.add_middleware(
     secret_key=SECRET_KEY,
     session_cookie="rg_session",
     max_age=86400,  # 24 hours
+    same_site="none",  # Required: HF Spaces embeds app in iframe from huggingface.co
+    https_only=True,   # Required when SameSite=None
 )
 
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -85,6 +87,13 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+def _render(request: Request, name: str, ctx: dict | None = None, status_code: int = 200):
+    """Render a template with cross-version Starlette compatibility."""
+    context = dict(ctx) if ctx else {}
+    context["request"] = request
+    return templates.TemplateResponse(request=request, name=name, context=context, status_code=status_code)
+
 
 def _get_user(request: Request) -> User | None:
     """Get current logged-in user from session."""
@@ -133,7 +142,7 @@ async def home(request: Request):
     user = _get_user(request)
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("home.html", context={"request": request})
+    return _render(request, "home.html")
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -141,7 +150,7 @@ async def login_page(request: Request):
     user = _get_user(request)
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("login.html", context={"request": request, "error": None})
+    return _render(request, "login.html", {"error": None})
 
 
 @app.post("/login", response_class=HTMLResponse)
@@ -152,11 +161,7 @@ async def login_submit(
 ):
     user = authenticate_user(username, password)
     if not user:
-        return templates.TemplateResponse(
-            "login.html",
-            context={"request": request, "error": "Invalid credentials"},
-            status_code=401,
-        )
+        return _render(request, "login.html", {"error": "Invalid credentials"}, status_code=401)
     request.session["user_id"] = user.id
     request.session["username"] = user.username
     request.session["role"] = user.role
@@ -177,7 +182,7 @@ async def register_page(request: Request):
     user = _get_user(request)
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("register.html", context={"request": request, "error": None})
+    return _render(request, "register.html", {"error": None})
 
 
 @app.post("/register", response_class=HTMLResponse)
@@ -189,23 +194,14 @@ async def register_submit(
     password_confirm: str = Form(...),
 ):
     if password != password_confirm:
-        return templates.TemplateResponse(
-            "register.html",
-            context={"request": request, "error": "Passwords do not match"},
-        )
+        return _render(request, "register.html", {"error": "Passwords do not match"})
     if len(password) < 8:
-        return templates.TemplateResponse(
-            "register.html",
-            context={"request": request, "error": "Password must be at least 8 characters"},
-        )
+        return _render(request, "register.html", {"error": "Password must be at least 8 characters"})
 
     db = SessionLocal()
     try:
         if db.query(User).filter((User.email == email) | (User.username == username)).first():
-            return templates.TemplateResponse(
-                "register.html",
-                context={"request": request, "error": "Username or email already taken"},
-            )
+            return _render(request, "register.html", {"error": "Username or email already taken"})
     finally:
         db.close()
 
@@ -238,11 +234,8 @@ async def dashboard(request: Request):
             .limit(10)
             .all()
         )
-        # Latest scan stats
         latest = scans[0] if scans else None
         total_scans = db.query(ScanRun).filter_by(user_id=user.id).count()
-
-        # Aggregate stats from latest scan
         stats = {
             "total_repos": latest.total_repos if latest else 0,
             "healthy": latest.healthy if latest else 0,
@@ -251,10 +244,7 @@ async def dashboard(request: Request):
             "repaired": latest.repaired if latest else 0,
             "total_scans": total_scans,
         }
-        return templates.TemplateResponse(
-            "dashboard.html",
-            context={"request": request, "user": user, "scans": scans, "stats": stats},
-        )
+        return _render(request, "dashboard.html", {"user": user, "scans": scans, "stats": stats})
     finally:
         db.close()
 
@@ -273,10 +263,7 @@ async def scan_detail(request: Request, scan_id: str):
             .order_by(RepoReport.status.desc(), RepoReport.repo_name)
             .all()
         )
-        return templates.TemplateResponse(
-            "scan_detail.html",
-            context={"request": request, "user": user, "scan": scan, "reports": reports},
-        )
+        return _render(request, "scan_detail.html", {"user": user, "scan": scan, "reports": reports})
     finally:
         db.close()
 
@@ -284,10 +271,7 @@ async def scan_detail(request: Request, scan_id: str):
 @app.get("/settings", response_class=HTMLResponse)
 async def settings_page(request: Request):
     user = _require_user(request)
-    return templates.TemplateResponse(
-        "settings.html",
-        context={"request": request, "user": user, "success": None, "error": None},
-    )
+    return _render(request, "settings.html", {"user": user, "success": None, "error": None})
 
 
 @app.post("/settings", response_class=HTMLResponse)
@@ -322,25 +306,16 @@ async def settings_update(
         # Password change
         if new_password:
             if not current_password or not verify_password(current_password, db_user.password_hash):
-                return templates.TemplateResponse(
-                    "settings.html",
-                    context={"request": request, "user": db_user, "success": None, "error": "Current password is incorrect"},
-                )
+                return _render(request, "settings.html", {"user": db_user, "success": None, "error": "Current password is incorrect"})
             if len(new_password) < 8:
-                return templates.TemplateResponse(
-                    "settings.html",
-                    context={"request": request, "user": db_user, "success": None, "error": "New password must be at least 8 characters"},
-                )
+                return _render(request, "settings.html", {"user": db_user, "success": None, "error": "New password must be at least 8 characters"})
             db_user.password_hash = hash_password(new_password)
 
         db.add(AuditLog(user_id=user.id, action="settings_updated"))
         db.commit()
         db.refresh(db_user)
 
-        return templates.TemplateResponse(
-            "settings.html",
-            context={"request": request, "user": db_user, "success": "Settings saved", "error": None},
-        )
+        return _render(request, "settings.html", {"user": db_user, "success": "Settings saved", "error": None})
     finally:
         db.close()
 
@@ -353,10 +328,7 @@ async def audit_log(request: Request):
     db = SessionLocal()
     try:
         logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(100).all()
-        return templates.TemplateResponse(
-            "audit.html",
-            context={"request": request, "user": user, "logs": logs},
-        )
+        return _render(request, "audit.html", {"user": user, "logs": logs})
     finally:
         db.close()
 
