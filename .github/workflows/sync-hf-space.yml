@@ -64,9 +64,11 @@ jobs:
           # HF Dockerfile → root (replaces repo Dockerfile)
           cp deploy/huggingface/Dockerfile "$DEPLOY_DIR/Dockerfile"
 
-          # Startup script (keep deploy/ path so Dockerfile COPY works)
+          # Deploy assets (keep deploy/ path so Dockerfile COPY works)
           mkdir -p "$DEPLOY_DIR/deploy/huggingface"
           cp deploy/huggingface/start.sh "$DEPLOY_DIR/deploy/huggingface/start.sh"
+          cp deploy/huggingface/requirements-web.txt "$DEPLOY_DIR/deploy/huggingface/requirements-web.txt"
+          cp -r deploy/huggingface/webapp "$DEPLOY_DIR/deploy/huggingface/webapp"
 
           # Application source code
           cp pyproject.toml "$DEPLOY_DIR/"
