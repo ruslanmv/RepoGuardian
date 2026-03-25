@@ -133,7 +133,7 @@ async def home(request: Request):
     user = _get_user(request)
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("home.html", {"request": request})
+    return templates.TemplateResponse("home.html", context={"request": request})
 
 
 @app.get("/login", response_class=HTMLResponse)
@@ -141,7 +141,7 @@ async def login_page(request: Request):
     user = _get_user(request)
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("login.html", {"request": request, "error": None})
+    return templates.TemplateResponse("login.html", context={"request": request, "error": None})
 
 
 @app.post("/login", response_class=HTMLResponse)
@@ -154,7 +154,7 @@ async def login_submit(
     if not user:
         return templates.TemplateResponse(
             "login.html",
-            {"request": request, "error": "Invalid credentials"},
+            context={"request": request, "error": "Invalid credentials"},
             status_code=401,
         )
     request.session["user_id"] = user.id
@@ -177,7 +177,7 @@ async def register_page(request: Request):
     user = _get_user(request)
     if user:
         return RedirectResponse("/dashboard", status_code=302)
-    return templates.TemplateResponse("register.html", {"request": request, "error": None})
+    return templates.TemplateResponse("register.html", context={"request": request, "error": None})
 
 
 @app.post("/register", response_class=HTMLResponse)
@@ -191,12 +191,12 @@ async def register_submit(
     if password != password_confirm:
         return templates.TemplateResponse(
             "register.html",
-            {"request": request, "error": "Passwords do not match"},
+            context={"request": request, "error": "Passwords do not match"},
         )
     if len(password) < 8:
         return templates.TemplateResponse(
             "register.html",
-            {"request": request, "error": "Password must be at least 8 characters"},
+            context={"request": request, "error": "Password must be at least 8 characters"},
         )
 
     db = SessionLocal()
@@ -204,7 +204,7 @@ async def register_submit(
         if db.query(User).filter((User.email == email) | (User.username == username)).first():
             return templates.TemplateResponse(
                 "register.html",
-                {"request": request, "error": "Username or email already taken"},
+                context={"request": request, "error": "Username or email already taken"},
             )
     finally:
         db.close()
@@ -253,7 +253,7 @@ async def dashboard(request: Request):
         }
         return templates.TemplateResponse(
             "dashboard.html",
-            {"request": request, "user": user, "scans": scans, "stats": stats},
+            context={"request": request, "user": user, "scans": scans, "stats": stats},
         )
     finally:
         db.close()
@@ -275,7 +275,7 @@ async def scan_detail(request: Request, scan_id: str):
         )
         return templates.TemplateResponse(
             "scan_detail.html",
-            {"request": request, "user": user, "scan": scan, "reports": reports},
+            context={"request": request, "user": user, "scan": scan, "reports": reports},
         )
     finally:
         db.close()
@@ -286,7 +286,7 @@ async def settings_page(request: Request):
     user = _require_user(request)
     return templates.TemplateResponse(
         "settings.html",
-        {"request": request, "user": user, "success": None, "error": None},
+        context={"request": request, "user": user, "success": None, "error": None},
     )
 
 
@@ -324,12 +324,12 @@ async def settings_update(
             if not current_password or not verify_password(current_password, db_user.password_hash):
                 return templates.TemplateResponse(
                     "settings.html",
-                    {"request": request, "user": db_user, "success": None, "error": "Current password is incorrect"},
+                    context={"request": request, "user": db_user, "success": None, "error": "Current password is incorrect"},
                 )
             if len(new_password) < 8:
                 return templates.TemplateResponse(
                     "settings.html",
-                    {"request": request, "user": db_user, "success": None, "error": "New password must be at least 8 characters"},
+                    context={"request": request, "user": db_user, "success": None, "error": "New password must be at least 8 characters"},
                 )
             db_user.password_hash = hash_password(new_password)
 
@@ -339,7 +339,7 @@ async def settings_update(
 
         return templates.TemplateResponse(
             "settings.html",
-            {"request": request, "user": db_user, "success": "Settings saved", "error": None},
+            context={"request": request, "user": db_user, "success": "Settings saved", "error": None},
         )
     finally:
         db.close()
@@ -355,7 +355,7 @@ async def audit_log(request: Request):
         logs = db.query(AuditLog).order_by(AuditLog.created_at.desc()).limit(100).all()
         return templates.TemplateResponse(
             "audit.html",
-            {"request": request, "user": user, "logs": logs},
+            context={"request": request, "user": user, "logs": logs},
         )
     finally:
         db.close()
