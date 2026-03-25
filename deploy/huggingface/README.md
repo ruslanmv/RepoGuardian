@@ -2,7 +2,7 @@
 title: RepoGuardian
 emoji: "\U0001f6e1\ufe0f"
 colorFrom: blue
-colorTo: cyan
+colorTo: indigo
 sdk: docker
 pinned: false
 license: apache-2.0
